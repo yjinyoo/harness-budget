@@ -42,7 +42,7 @@ import re
 import sys
 from pathlib import Path
 
-try:  # Windows console defaults to cp1252; some memory text is Korean
+try:  # Windows console defaults to cp1252; memory text may be non-ASCII
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 except (AttributeError, ValueError):
@@ -56,11 +56,22 @@ LINK_RE = re.compile(r"\[\[([^\]]+?)\]\]")
 # markdown link target ending in .md, e.g. [Title](feedback_x.md) or (file.md#frag)
 MD_LINK_RE = re.compile(r"\(([A-Za-z0-9_./-]+?\.md)(?:#[^)]*)?\)")
 FRONT_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
+# English defaults only, because a stop list is the one part of this that cannot be
+# language-neutral. A store written in another language supplies its own: `stopwords.txt`
+# beside this script, one token per line, is read when present and added to these.
 STOP = {
     "the", "a", "an", "to", "of", "for", "in", "on", "and", "or", "not",
-    "is", "be", "before", "after", "with", "no", "use", "전", "후", "시",
-    "꼭", "할", "것", "및", "등", "이", "그", "수", "때", "더",
+    "is", "be", "before", "after", "with", "no", "use",
 }
+_EXTRA = Path(__file__).with_name("stopwords.txt")
+if _EXTRA.exists():
+    STOP |= {w.strip().lower() for w in _EXTRA.read_text(encoding="utf-8").splitlines()
+             if w.strip() and not w.lstrip().startswith("#")}
+
+# Letters and digits in ANY script, minus underscore. Naming scripts explicitly is the
+# trap here: a token in a script the pattern omits never forms at all, so it cannot show
+# up as missing. The score just quietly drops and the store looks worse than it is.
+WORD_RE = re.compile(r"[^\W_]+", re.UNICODE)
 
 
 def parse_front(text: str) -> dict:
@@ -81,7 +92,7 @@ def parse_front(text: str) -> dict:
 
 
 def tokenize(s: str) -> set[str]:
-    toks = re.findall(r"[A-Za-z0-9가-힣]+", (s or "").lower())
+    toks = WORD_RE.findall((s or "").lower())
     return {t for t in toks if t not in STOP and len(t) > 1}
 
 

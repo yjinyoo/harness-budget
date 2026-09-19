@@ -24,9 +24,9 @@ over" when it was 12 percent, and nothing that read the number could tell. A
 budget line that measures itself cannot go stale; one that is typed is only
 right on the day it was typed.
 
-Counting is in **characters, newlines excluded, never bytes**. Outside ASCII
-that is not a detail: one Korean or Chinese character is three bytes in UTF-8,
-so `wc -c` reports three times what the context window actually sees.
+Counting is in **characters, newlines excluded, never bytes**. Outside ASCII a
+character is commonly two to four bytes in UTF-8, so `wc -c` can report several
+times what the context window actually sees.
 
 ## budget_check.py
 
@@ -56,8 +56,9 @@ feed.
 
 Deterministic integrity checks on a directory of memory files: frontmatter that
 parses, names that match their file, index entries that point at something,
-near-duplicate entries that should be one. Tokenizes Korean and English
-together, so a mixed-language store scores the way it reads.
+near-duplicate entries that should be one. Tokenizing is Unicode-general, so a
+store in any script scores the way it reads. The stop list ships English only;
+drop a `stopwords.txt` beside the script to add your own.
 
 ## link_lint.py
 

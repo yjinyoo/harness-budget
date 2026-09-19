@@ -37,7 +37,7 @@ import re
 import sys
 from pathlib import Path
 
-try:  # Windows console defaults to cp1252; memory triggers contain Korean
+try:  # Windows console defaults to cp1252; memory text may be non-ASCII
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 except (AttributeError, ValueError):
@@ -46,11 +46,22 @@ except (AttributeError, ValueError):
 DEFAULT_DIR = Path(os.path.expanduser(os.environ.get("AGENT_MEMORY_DIR", "~/.claude/memory")))
 CASES = Path(__file__).with_name("memory_eval_cases.json")
 FRONT_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
+# English defaults only, because a stop list is the one part of this that cannot be
+# language-neutral. A store written in another language supplies its own: `stopwords.txt`
+# beside this script, one token per line, is read when present and added to these.
 STOP = {
     "the", "a", "an", "to", "of", "for", "in", "on", "and", "or", "not", "is",
-    "be", "before", "after", "with", "no", "use", "전", "후", "시", "꼭", "할",
-    "것", "및", "등", "이", "그", "수", "때", "더", "안", "는", "을", "를", "로",
+    "be", "before", "after", "with", "no", "use",
 }
+_EXTRA = Path(__file__).with_name("stopwords.txt")
+if _EXTRA.exists():
+    STOP |= {w.strip().lower() for w in _EXTRA.read_text(encoding="utf-8").splitlines()
+             if w.strip() and not w.lstrip().startswith("#")}
+
+# Letters and digits in ANY script, minus underscore. Naming scripts explicitly is the
+# trap here: a token in a script the pattern omits never forms at all, so it cannot show
+# up as missing. Recall just quietly drops and the store looks worse than it is.
+WORD_RE = re.compile(r"[^\W_]+", re.UNICODE)
 
 
 def field(block: str, key: str) -> str:
@@ -68,7 +79,7 @@ def doc_text(text: str) -> str:
 
 
 def toks(s: str) -> list[str]:
-    return [t for t in re.findall(r"[A-Za-z0-9가-힣]+", s.lower()) if t not in STOP and len(t) > 1]
+    return [t for t in WORD_RE.findall(s.lower()) if t not in STOP and len(t) > 1]
 
 
 def build_index(memory_dir: Path):

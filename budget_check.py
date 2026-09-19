@@ -9,9 +9,9 @@ could tell. A budget line that measures itself cannot go stale; one that is
 typed is only right on the day it was typed.
 
 Counting is in characters, not bytes, and newlines are excluded. The
-distinction matters outside ASCII: one Korean character is three bytes in
-UTF-8, so `wc -c` reports three times the number a context window actually
-sees.
+distinction matters outside ASCII, where one character is commonly two to four
+bytes in UTF-8, so `wc -c` can report several times the number a context window
+actually sees.
 
     python budget_check.py                 # uses budgets.json beside this file
     python budget_check.py --config x.json
