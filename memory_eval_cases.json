@@ -1,0 +1,26 @@
+{
+  "_about": "Answer key for memory_eval.py. Each case pairs a trigger phrase, written the way it would appear in a user message, with the memory file stem that must surface for the harness to behave correctly. Keep the key separate from the scorer: a low recall@K means the target memory's `description:` is not discriminative for its own trigger, and the fix is to rewrite that description, not the scorer. These cases are illustrative; replace them with your own.",
+  "_maintenance": "Add a case whenever a new behavioural rule lands. A rule with no case is a rule nobody has checked is findable.",
+  "cases": [
+    {
+      "q": "can you commit this and push it to main",
+      "expect": ["feedback_ask_before_pushing"]
+    },
+    {
+      "q": "the plot looks wrong, the axis labels are missing",
+      "expect": ["feedback_figure_checklist"]
+    },
+    {
+      "q": "let's run the parameter sweep on the cluster overnight",
+      "expect": ["reference_cluster_submission"]
+    },
+    {
+      "q": "draft an email to the collaborator about the delay",
+      "expect": ["feedback_outbound_tone", "reference_collaborators"]
+    },
+    {
+      "q": "this number disagrees with what we reported last month",
+      "expect": ["feedback_verify_before_reporting"]
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "header": "Context budget (session start):",
+  "footer": "Move the excess out rather than trimming it: an archive file that never auto-loads has no budget.",
+  "max_rows_per_group": 5,
+
+  "checks": [
+    {
+      "path": "~/myproject/CLAUDE.md",
+      "limit": 100,
+      "unit": "lines",
+      "note": "loaded every turn"
+    },
+    {
+      "path": "~/.claude/CLAUDE.md",
+      "limit": 80,
+      "unit": "lines",
+      "note": "loaded every turn"
+    },
+    {
+      "path": "~/.claude/memory/MEMORY.md",
+      "limit": 8000,
+      "unit": "chars",
+      "note": "loaded every turn"
+    },
+    {
+      "root": "~/.claude/memory",
+      "glob": "MEMORY_*.md",
+      "exclude": "*_history.md",
+      "limit": 25000,
+      "unit": "chars",
+      "note": "loaded once per session"
+    },
+    {
+      "root": "~/myproject",
+      "glob": "*/HANDOFF.md",
+      "limit": 10000,
+      "unit": "chars",
+      "note": "read whole at session start"
+    }
+  ],
+
+  "subchecks": [
+    {
+      "name": "memory integrity",
+      "script": "memory_lint.py",
+      "ok_contains": "WARN: 0",
+      "report_marker": "HARD:"
+    },
+    {
+      "name": "dead paths in the rules",
+      "script": "link_lint.py",
+      "report_marker": ":"
+    }
+  ]
+}
