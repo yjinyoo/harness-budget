@@ -1,14 +1,14 @@
 # harness-budget
 
-Four checks for a coding-agent harness that loads files into context
-automatically: measure what they cost, and verify that what they say is still
-true.
+Five checks for a coding-agent harness: measure what it costs, in context and in
+wall clock, and verify that what it says is still true.
 
 ```
 python budget_check.py          # over-budget files, and the linters below
 python memory_lint.py           # integrity of a file-based memory store
 python link_lint.py <dir>       # every path the documents name must exist
 python memory_eval.py           # recall@K for that memory store
+python latency_check.py <tool>  # where the wall clock goes when an agent drives a tool
 ```
 
 ## Why measure it at all
@@ -78,6 +78,35 @@ that should come back; the score is where it ranks.
 This is a lexical proxy for the real recall path, not the path itself. It is
 useful for catching a description that has stopped being findable, not for
 proving the live retriever works.
+
+## latency_check.py
+
+The other cost. Everything above measures context; this measures wall clock, by
+mining the session transcripts Claude Code writes under `~/.claude/projects`.
+Every tool call is split into the two things its elapsed time can be: TOOL time,
+from the call to its result, which is the server actually working, and MODEL
+time, from that result to the next call, which is the agent reading, thinking
+and generating.
+
+```
+python latency_check.py mcp__some-server__
+python latency_check.py ""            # every tool, ranked by total time
+```
+
+The split matters because the two have opposite fixes and are indistinguishable
+from inside the loop: slow is slow. If TOOL time dominates, make the tool
+faster. If MODEL time dominates, make fewer calls, and making the tool faster
+buys almost nothing.
+
+It was written to answer why figures through one MCP server took so long. The
+answer was 11 percent tool, 89 percent round trip, with a median of 0.35 s in
+the tool against 6.4 s waiting on the model. That is a factor of eighteen in the
+direction nobody was working on, and the week before it was measured the effort
+had been going into making the server faster. The fix it pointed at was a batch
+tool that takes N typed calls in one round trip.
+
+Guessing this ratio does not work. Measure it before optimizing anything an
+agent drives in a loop.
 
 ## Requirements
 
