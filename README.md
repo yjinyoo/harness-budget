@@ -7,7 +7,7 @@ wall clock, and verify that what it says is still true.
 python budget_check.py          # over-budget files, and the linters below
 python memory_lint.py           # integrity of a file-based memory store
 python link_lint.py <dir>       # every path the documents name must exist
-python memory_eval.py           # recall@K for that memory store
+python memory_eval.py           # does the right memory come back for a question
 python latency_check.py <tool>  # where the wall clock goes when an agent drives a tool
 ```
 
@@ -47,10 +47,9 @@ worse than a missed warning, so it exits 0 even when it crashes.
 }
 ```
 
-`exclude` matters more than it looks. An archive file is where the excess
-*goes*; it never loads at session start, so it is supposed to grow. Counting it
-pushes whoever reads the report to trim the very thing the budget exists to
-feed.
+`exclude` earns its place. An archive file is where the excess *goes*; it never
+loads at session start, so it is supposed to grow. Counting it pushes whoever
+reads the report to trim the very thing the budget exists to feed.
 
 ## memory_lint.py
 
@@ -70,11 +69,14 @@ weeks.
 
 ## memory_eval.py
 
-Recall@K for the memory store. A harness that retrieves memories bets its
-behaviour on retrieval, and retrieval is never measured: a memory whose
-description drifted vague stops surfacing silently, and the first sign is the
-mistake it existed to prevent. Cases are trigger phrases paired with the memory
-that should come back; the score is where it ranks.
+Does the right memory come back when it should? Each test case is a trigger
+phrase paired with the memory that ought to surface for it. Every memory is
+ranked against the phrase, and the score is how often the right one lands in the
+top K.
+
+It is worth measuring because nothing else does. A memory whose description
+drifts vague stops surfacing silently: the file is still there, nothing errors,
+and the first sign is the mistake the memory existed to prevent.
 
 This is a lexical proxy for the real recall path, not the path itself. It is
 useful for catching a description that has stopped being findable, not for
@@ -100,14 +102,13 @@ faster. If MODEL time dominates, make fewer calls, and making the tool faster
 buys almost nothing.
 
 It was written to answer why figures through one MCP server took so long. The
-answer was 11 percent tool, 89 percent round trip, with a median of 0.35 s in
-the tool against 6.4 s waiting on the model. That is a factor of eighteen in the
-direction nobody was working on, and the week before it was measured the effort
-had been going into making the server faster. The fix it pointed at was a batch
-tool that takes N typed calls in one round trip.
+answer was 11 percent tool, 89 percent round trip: a median of 0.35 s in the
+tool against 6.4 s waiting on the model. The week before it was measured, the
+effort had been going into making the server faster. The fix it pointed at
+instead was a batch tool that takes N typed calls in one round trip.
 
-Guessing this ratio does not work. Measure it before optimizing anything an
-agent drives in a loop.
+Measure the split before optimizing anything an agent drives in a loop. The
+ratio is not guessable.
 
 ## Requirements
 
